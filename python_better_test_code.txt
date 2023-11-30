@@ -1,0 +1,155 @@
+import math
+import openpyxl
+import time
+
+test_vals = [32.5,15.2,87,92.6,27.9,66.7,7.0,10.0,17.0,19.0,27.0,77.0,53.0,113.0,79.0,2.0,509.0,227.0,7.0,12.0,2.0,32.0,27.0,25.0,32.5,15.2,87,92.6,27.9,66.7,7.0,10.0,17.0,19.0,27.0,77.0,53.0,113.0,79.0,2.0,509.0,227.0,7.0,12.0,2.0,32.0,27.0,25.0,32.5,15.2,87,92.6,27.9,66.7,7.0,10.0,17.0,19.0,27.0,77.0,53.0,113.0,79.0,2.0,509.0,227.0,7.0,12.0,2.0,32.0,27.0,25.0,32.5,15.2,87,92.6,27.9,66.7,7.0,10.0,17.0,19.0,27.0,77.0,53.0,113.0,79.0,2.0,509.0,227.0,7.0,12.0,2.0,32.0,27.0,25.0,32.5,15.2,87,92.6,27.9,66.7,7.0,10.0,17.0,19.0,27.0,77.0,53.0,113.0,79.0,2.0,509.0,227.0,7.0,12.0,2.0,32.0,27.0,25.0,32.5,15.2,87,92.6,27.9,66.7,7.0,10.0,17.0,19.0,27.0,77.0,53.0,113.0,79.0,2.0,509.0,227.0,7.0,12.0,2.0,32.0,27.0,25.0,32.5,15.2,87,92.6,27.9,66.7,7.0,10.0,17.0,19.0,27.0,77.0,53.0,113.0,79.0,2.0,509.0,227.0,7.0,12.0,2.0,32.0,27.0,25.0,32.5,15.2,87,92.6,27.9,66.7,7.0,10.0,17.0,19.0,27.0,77.0,53.0,113.0,79.0,2.0,509.0,227.0,7.0,12.0,2.0,32.0,27.0,25.0,32.5,15.2,87,92.6,27.9,66.7,7.0,10.0,17.0,19.0,27.0,77.0,53.0,113.0,79.0,2.0,509.0,227.0,7.0,12.0,2.0,32.0,27.0,25.0,32.5,15.2,87,92.6,27.9,66.7,7.0,10.0,17.0,19.0,27.0,77.0,53.0,113.0,79.0,2.0,509.0,227.0,7.0,12.0,2.0,32.0,27.0,25.0]
+x = 0
+y=2
+#load excel file
+wb = openpyxl.load_workbook(r'C:\Users\awind\Desktop\Test_1.xlsx')
+
+
+
+for x in range(0,32):
+    #create new sheet within excel
+    sheet = wb.active
+
+    x *= 6
+
+    #random assigned values for test
+    x_b = test_vals[x]
+    y_b = test_vals[x+1]
+    x_r = test_vals[x+2]
+    y_r = test_vals[x+3]
+    x_target = test_vals[x+4]
+    y_target = test_vals[x+5]
+    x /= 6
+    #calculate the angle the car is pointing based on red and blue dots
+    #blue is front
+    def car_angle(x_b,y_b,x_r,y_r):
+        return math.degrees(math.atan((y_b-y_r)/(x_b-x_r)))
+
+
+    #Calculate the distance from the blue part of VATR to the target
+    def car_distance(x_b,y_b,x_target,y_target):
+        return math.sqrt((x_target-x_b)**2+(y_target-y_b)**2)
+
+
+    #angle from car blue side to the target
+    def car_to_target_angle(x_b,y_b,x_target,y_target):
+        return math.degrees(math.atan((y_target-y_b)/(x_target-x_b)))
+
+
+    #calculate the desired angle to turn for the VATR
+    def desired_angle(car_to_target_angle,car_angle):
+           return (car_to_target_angle(x_b,y_b,x_target,y_target)-car_angle(x_b,y_b,x_r,y_r))
+
+
+    #temp values to assist in calculations
+    tmp = desired_angle(car_to_target_angle,car_angle)
+    tmp_dist = car_distance(x_b,y_b,x_target,y_target)
+
+    #assign true or false if the desired angle is within range or not
+    #true means drive straight
+    #false means turn
+    if -5.0 < tmp < 5.0:
+        forward_over_turn = True
+    else:
+        forward_over_turn = False
+
+    #set output value if VATR needs to drive straight
+    def straight(car_distance):
+        if -5 >= tmp_dist >= -10:
+            return 16
+        elif -11 >= tmp_dist >= -20:
+            return 15
+        elif -21 >= tmp_dist >= -30:
+            return 14
+        elif 5 <= tmp_dist <= 10:
+            return 16
+        elif 11 <= tmp_dist <= 20:
+            return 15
+        elif 21 <= tmp_dist <= 30:
+            return 14
+        else: 
+            return 7
+
+
+    #neg is left
+    #pos is right
+    #-5 to 5 is stop
+    #set output value if VATR needs to turn
+    def switch(tmp):
+        if -5.0 >= tmp >= -65.0:
+            return 6
+        elif -66.0 >= tmp >= -125.0:
+            return 4
+        elif -126.0 >= tmp >= -185.0:
+            return 2
+        elif -186.0 >= tmp >= -245.0:
+            return 8
+        elif -246.0 >= tmp >= -305.0:
+            return 10
+        elif -306.0 >= tmp >= -360.0:
+            return 12
+        elif 5.0 <= tmp <= 65.0:
+            return 5
+        elif 66.0 <= tmp <= 125.0:
+            return 3
+        elif 126.0 <= tmp <= 185.0:
+            return 1
+        elif 186.0 <= tmp <= 245.0:
+            return 9
+        elif 246.0 <= tmp <= 305.0:
+            return 11
+        elif 306.0 <= tmp <= 360.0:
+            return 13
+        elif -5 < tmp < 5:
+            return 7
+        else:
+            return 20
+
+    #assign out value so the VATR needs to turn or drive straight
+    def output(forward_over_turn):
+        if forward_over_turn == False:
+            return switch(tmp)
+        elif forward_over_turn == True:
+            return straight(car_distance)
+
+    #final descision value command
+    out = output(forward_over_turn)
+
+
+    #ouput values of steps
+    print("Car Angle = ", car_angle(x_b,y_b,x_r,y_r))
+    print("Car Distance = ", car_distance(x_b,y_b,x_target,y_target), " m")
+    print("Car Distance = ", car_to_target_angle(x_b,y_b,x_target,y_target))
+    print("Car Distance = ", desired_angle(car_to_target_angle,car_angle))
+    print("Output = ", out)
+
+
+    data_values = (x+1),car_angle(x_b,y_b,x_r,y_r),car_distance(x_b,y_b,x_target,y_target),car_to_target_angle(x_b,y_b,x_target,y_target),desired_angle(car_to_target_angle,car_angle),x_b,y_b,x_r,y_r,out
+
+    lable_values = 'tests','Car Angle','Car Distance','Angle to target','Desired angle turn','x_b','y_b','x_r','y_r','Output'
+
+    i = 0
+    
+  
+    for i in range(len(data_values)):
+        i+=1
+        #write lables on row 1 of xlsx file
+        sheet.cell(row=1,column=i).value = lable_values[i-1]
+        #write data on row 2 of xlsx file
+        sheet.cell(row=y,column=i).value = data_values[i-1]
+    
+
+    
+
+
+    #save the file and tell the terminal if it saved
+    wb.save(r'C:\Users\awind\Desktop\Test_1.xlsx')
+    print("Data saved to Excel file.")
+    y+=1
+
+
+wb.close()
