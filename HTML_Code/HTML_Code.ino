@@ -1,7 +1,11 @@
 #include "WiFiS3.h"
 #define SECRET_SSID "Charles Laptop"
 #define SECRET_PASS "51+9tQ66"
-
+#define relay 2
+#define relaytwo 3
+#define relaythree 4
+String header;
+String output = "off";
 
 ///////please enter your sensitive data in the Secret tab/arduino_secrets.h
 char ssid[] = SECRET_SSID;        // your network SSID (name)
@@ -20,7 +24,13 @@ void setup() {
   }
   Serial.println("Access Point Web Server");
 
-  pinMode(led, OUTPUT);      // set the LED pin mode
+  pinMode(relay, OUTPUT); // set the Relay pin mode
+  pinMode(relaytwo, OUTPUT);
+  pinMode(relaythree, OUTPUT);
+
+  digitalWrite(relay, HIGH);
+  digitalWrite(3, HIGH);
+  digitalWrite(4, HIGH);
 
   // check for the WiFi module:
   if (WiFi.status() == WL_NO_MODULE) {
@@ -96,12 +106,51 @@ void loop() {
             // and a content-type so the client knows what's coming, then a blank line:
             client.println("HTTP/1.1 200 OK");
             client.println("Content-type:text/html");
+            client.println("Connection: close");
             client.println();
+            // turns the relay on and off
+            if (header.indexOf("GET /on") >= 0) {
+              output = "on";
+              digitalWrite(relay, LOW);
+            } else if (header.indexOf("GET /off") >= 0) {
+              output = "off";
+              digitalWrite(relay, HIGH);
+            }
+           // Display the HTML web page
+            client.println("<!DOCTYPE html><html>");
+            client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+            client.println("<link rel=\"icon\" href=\"data:,\">");
+            // CSS to style the on/off buttons
+            // Feel free to change the background-color and font-size attributes to fit your preferences
+            client.println("<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}");
+            client.println(".on { background-color: #FF0000; border: 5px; color: white; padding: 16px 40px; border-radius: 20px;");
+            client.println("text-decoration: none; font-size: 30px; margin: 2px; cursor: pointer;}");
+            client.println(".off {background-color: #000000;border: 5px; color: white; padding: 16px 40px; border-radius: 20px;");
+            client.println("text-decoration: none; font-size: 30px; margin: 2px; cursor: pointer;}</style></head>");
+            //text box
+            client.println("<!DOCTYPE html>");
+            client.println("<html>");
+            client.println("<head><title>Arduino Text Box</title></head>");
+            client.println("<body>");
+            client.println("<h1>Enter text:</h1>");
+            client.println("<form action='/save' method='GET'>");
+            client.println("<input type='text' name='textbox' id='textbox'>");
+            client.println("<input type ='submit' value='Save'>");
+            client.println("</form>");
+            client.println("</body>");
+            client.println("</html>");
+            Serial.println("Get /save");
+            //Webpage heading
+            client.println("<body><h1>VATR Control Panel</h1>");  //creates labels for the webpage
+            client.println("<p>Relay " + output + "</p>");
+            if (output == "off") {
+              client.println("<p><a href=\"/on\"><button class=\"off\">OFF</button></a></p>");
+            } else {
+              client.println("<p><a href=\"/off\"><button class=\"on\">ON</button></a></p>");
+            }
+             
 
-            // the content of the HTTP response follows the header:
-            client.print("<p style=\"font-size:7vw;\">Click <a href=\"/H\">here</a> turn the LED on<br></p>");
-            client.print("<p style=\"font-size:7vw;\">Click <a href=\"/L\">here</a> turn the LED off<br></p>");
-
+            client.println("</body></html>");
             // The HTTP response ends with another blank line:
             client.println();
             // break out of the while loop:
@@ -114,17 +163,25 @@ void loop() {
         else if (c != '\r') {    // if you got anything else but a carriage return character,
           currentLine += c;      // add it to the end of the currentLine
         }
-
+        
         // Check to see if the client request was "GET /H" or "GET /L":
-        if (currentLine.endsWith("GET /H")) {
-          digitalWrite(led, HIGH);               // GET /H turns the LED on
-        }
-        if (currentLine.endsWith("GET /L")) {
-          digitalWrite(led, LOW);                // GET /L turns the LED off
-        }
+        if (header.indexOf("GET /on") >= 0) {
+              output = "on";
+              digitalWrite(relay, LOW);
+            } else if (header.indexOf("GET /off") >= 0) {
+              output = "off";
+              digitalWrite(relay, HIGH);
+            }
       }
     }
+    //clear header varible
+   if(client.find("GET /save"))   // get value entered into the text box
+   { String textboxValue = client.readStringUntil('\r');
+   textboxValue.trim();   //trim any leading or trailing spaces
+   delay(1000);
+   }
     // close the connection:
+    delay(1);
     client.stop();
     Serial.println("client disconnected");
   }
@@ -140,8 +197,14 @@ void printWiFiStatus() {
   Serial.print("IP Address: ");
   Serial.println(ip);
 
+  // print the received signal strength:
+  long rssi = WiFi.RSSI();
+  Serial.print("signal strength (RSSI):");
+  Serial.print(rssi);
+  Serial.println(" dBm");
   // print where to go in a browser:
-  Serial.print("To see this page in action, open a browser to http://");
+  Serial.print("Now open this URL on your browser --> http://");
   Serial.println(ip);
-
 }
+
+ 
