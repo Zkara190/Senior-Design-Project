@@ -58,10 +58,11 @@ while vid.isOpened():
                 car_angle = get_angle(yel_dot_coordinates, blue_dot_coordinates)
                 url = "http://localhost:8080/angles/" #site to post angles to
                 data = {"car_angle": car_angle}
+                print("Payload:", data)
                 try:
                     response = requests.post(url, json=data)
                     response.raise_for_status()
-                    print("Anlge sent correctly")
+                    print("Angle sent correctly")
                 except Exception as e:
                     print("failed to send: ", e)
                 print(car_angle)
