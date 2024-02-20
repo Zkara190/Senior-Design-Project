@@ -4,10 +4,11 @@ import serial
 
 app = FastAPI()
 
+
 class AngleData(BaseModel):
     car_angle: float    #, "target": []}
 
-stored_angle: float = None
+stored_angle: float = 21.0  #
 #arduino = serial.Serial('COMX', 9600) #replacing COMX with the chosen port; 9600 is baud rate
 
 @app.post("/angles/")
@@ -31,4 +32,4 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 '''
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="localhost", port=8080)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
