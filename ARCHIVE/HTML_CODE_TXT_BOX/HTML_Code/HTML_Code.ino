@@ -132,7 +132,7 @@ void loop() {
             client.println("<html>");
             client.println("<head><title>Arduino Text Box</title></head>");
             client.println("<body>");
-            client.println("<h1>Enter text:</h1>");
+            client.println("<h1>Enter text:</h1>"); // Enter text:
             client.println("<form action='/save' method='GET'>");
             client.println("<input type='text' name='textbox' id='textbox'>");
             client.println("<input type ='submit' value='Save'>");
